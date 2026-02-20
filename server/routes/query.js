@@ -58,10 +58,22 @@ queryRouter.post('/execute', async (req, res) => {
   } catch (err) {
     const duration = Date.now() - start;
     const code = err.code || 'QUERY_ERROR';
-    const message = err.message || 'Query failed';
+    let message = err.message || 'Query failed';
+    
+    // Handle SSL/certificate errors
+    if (message.includes('self-signed certificate') || message.includes('certificate') || code === 'DEPTH_ZERO_SELF_SIGNED_CERT' || code === 'SELF_SIGNED_CERT_IN_CHAIN') {
+      auditLog('db_ssl_error', { 
+        userId: req.user?.userId, 
+        error: message,
+        code,
+      });
+      message = 'Database SSL certificate error. Please contact administrator.';
+    }
+    
     if (code === '57014') {
       return res.status(408).json({ success: false, error: 'Query timeout', executionTimeMs: duration });
     }
+    
     return res.status(400).json({
       success: false,
       error: message,
