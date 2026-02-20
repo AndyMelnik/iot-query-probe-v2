@@ -7,24 +7,43 @@ function getToken() {
 let csrfToken = null;
 let csrfTokenPromise = null;
 
-export async function getCsrfToken() {
-  if (csrfToken) return csrfToken;
-  if (csrfTokenPromise) return csrfTokenPromise;
-  csrfTokenPromise = (async () => {
-    const r = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
-    if (!r.ok) throw new Error('Failed to get CSRF token');
-    const data = await r.json();
-    csrfToken = data.csrfToken;
+export async function getCsrfToken(forceRefresh = false) {
+  if (csrfToken && !forceRefresh) return csrfToken;
+  if (csrfTokenPromise && !forceRefresh) return csrfTokenPromise;
+  
+  // Clear if forcing refresh
+  if (forceRefresh) {
+    csrfToken = null;
     csrfTokenPromise = null;
-    return csrfToken;
+  }
+  
+  csrfTokenPromise = (async () => {
+    try {
+      const r = await fetch(`${API_BASE}/api/csrf-token`, { 
+        credentials: 'include',
+        method: 'GET',
+      });
+      if (!r.ok) {
+        const errorText = await r.text();
+        throw new Error(`Failed to get CSRF token: ${r.status} ${errorText}`);
+      }
+      const data = await r.json();
+      if (!data.csrfToken) {
+        throw new Error('CSRF token not returned from server');
+      }
+      csrfToken = data.csrfToken;
+      csrfTokenPromise = null;
+      return csrfToken;
+    } catch (err) {
+      csrfTokenPromise = null;
+      throw err;
+    }
   })();
   return csrfTokenPromise;
 }
 
 export async function refreshCsrfToken() {
-  csrfToken = null;
-  csrfTokenPromise = null;
-  return getCsrfToken();
+  return getCsrfToken(true);
 }
 
 export async function api(path, options = {}, retryOnCsrf = true) {
@@ -51,8 +70,8 @@ export async function api(path, options = {}, retryOnCsrf = true) {
     data = await res.text();
   }
   if (!res.ok) {
-    if (res.status === 403 && retryOnCsrf && (data?.error?.includes('CSRF') || data?.error?.includes('csrf'))) {
-      // CSRF token expired or invalid - refresh and retry once
+    if (res.status === 403 && retryOnCsrf && (data?.error?.includes('CSRF') || data?.error?.includes('csrf') || data?.code === 'CSRF_TOKEN_MISSING' || data?.code === 'CSRF_TOKEN_INVALID')) {
+      // CSRF token expired, invalid, or missing - refresh and retry once
       csrfToken = null;
       csrfTokenPromise = null;
       try {
@@ -60,6 +79,7 @@ export async function api(path, options = {}, retryOnCsrf = true) {
         // Retry the request with new token (only once)
         return api(path, options, false);
       } catch (refreshErr) {
+        console.error('CSRF token refresh failed:', refreshErr);
         throw new Error('CSRF token refresh failed. Please refresh the page.');
       }
     }

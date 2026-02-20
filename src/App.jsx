@@ -32,12 +32,23 @@ export default function App() {
       const authenticated = isAuthenticated();
       setAuth(authenticated);
       if (authenticated) {
-        setStatus('ready');
+        setStatus('connecting');
         try {
-          await getCsrfToken();
+          // Ensure CSRF token is fetched before marking as ready
+          await getCsrfToken(true); // Force refresh to ensure we have a fresh token
+          setStatus('ready');
         } catch (err) {
           setStatus('error');
           console.error('Failed to initialize CSRF token:', err);
+          // Try again after a short delay
+          setTimeout(async () => {
+            try {
+              await getCsrfToken(true);
+              setStatus('ready');
+            } catch (retryErr) {
+              console.error('CSRF token retry failed:', retryErr);
+            }
+          }, 1000);
         }
       } else {
         setStatus('not-authenticated');

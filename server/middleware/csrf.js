@@ -10,6 +10,7 @@ export function csrfTokenRoute(req, res) {
   if (!sessionId) {
     return res.status(400).json({ success: false, error: 'No session found' });
   }
+  // Always generate a new token for the session (refresh on each request)
   const token = crypto.randomBytes(24).toString('hex');
   tokens.set(sessionId, token);
   res.cookie(CSRF_COOKIE, token, {
@@ -25,6 +26,7 @@ export function csrfTokenRoute(req, res) {
 export function csrfMiddleware(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   if (req.path === '/api/auth/login') return next();
+  if (req.path === '/api/csrf-token') return next(); // Allow CSRF token endpoint
   const sessionId = req.cookies?.iqp_sid || req.sessionId;
   const expected = tokens.get(sessionId);
   const provided = req.headers[CSRF_HEADER.toLowerCase()] || req.headers[CSRF_HEADER] || req.body?._csrf;
@@ -32,10 +34,20 @@ export function csrfMiddleware(req, res, next) {
     return res.status(403).json({ success: false, error: 'No session found. Please refresh the page.' });
   }
   if (!expected) {
-    return res.status(403).json({ success: false, error: 'CSRF token not found. Please refresh the page.' });
+    // If no token exists for this session, allow the request but log it (might be first request)
+    // Actually, we should require CSRF token - so return error but with helpful message
+    return res.status(403).json({ 
+      success: false, 
+      error: 'CSRF token not found. Please refresh the page to get a new token.',
+      code: 'CSRF_TOKEN_MISSING'
+    });
   }
   if (!provided || provided !== expected) {
-    return res.status(403).json({ success: false, error: 'Invalid CSRF token. Please refresh the page and try again.' });
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Invalid CSRF token. Please refresh the page and try again.',
+      code: 'CSRF_TOKEN_INVALID'
+    });
   }
   next();
 }
