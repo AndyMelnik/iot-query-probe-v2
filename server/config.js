@@ -7,6 +7,7 @@ export const config = {
   queryRowLimit: parseInt(process.env.QUERY_ROW_LIMIT || '10000', 10),
   reportMaxRows: parseInt(process.env.REPORT_MAX_ROWS || '500', 10),
   redisUrl: process.env.REDIS_URL,
+  dbRejectUnauthorized: process.env.DB_REJECT_UNAUTHORIZED === 'true', // Default: false (accept self-signed)
 };
 
 // Validate JWT_SECRET at startup
