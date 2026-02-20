@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { isAuthenticated, clearAuth, executeQuery, exportXlsx, exportReportHtml } from './lib/api';
+import { isAuthenticated, clearAuth, executeQuery, exportXlsx, exportReportHtml, getCsrfToken } from './lib/api';
 import { SQLEditor } from './components/SQLEditor';
 import { ResultsTable } from './components/ResultsTable';
 import { ChartBuilder } from './components/ChartBuilder';
@@ -7,10 +7,11 @@ import { MapView } from './components/MapView';
 import { ExportBar } from './components/ExportBar';
 import './App.css';
 
-const defaultSql = 'SELECT 1 AS id, \'Hello\' AS label\nLIMIT 10';
+const defaultSql = 'SELECT * FROM raw_business_data.objects\nLIMIT 1000';
 
 export default function App() {
   const [auth, setAuth] = useState(null);
+  const [status, setStatus] = useState('connecting');
   const [sql, setSql] = useState(() => {
     try {
       return localStorage.getItem('iqp_sql') || defaultSql;
@@ -27,7 +28,22 @@ export default function App() {
   const mapContainerRef = useRef(null);
 
   useEffect(() => {
-    setAuth(isAuthenticated());
+    const init = async () => {
+      const authenticated = isAuthenticated();
+      setAuth(authenticated);
+      if (authenticated) {
+        setStatus('ready');
+        try {
+          await getCsrfToken();
+        } catch (err) {
+          setStatus('error');
+          console.error('Failed to initialize CSRF token:', err);
+        }
+      } else {
+        setStatus('not-authenticated');
+      }
+    };
+    init();
   }, []);
 
   const runQuery = useCallback(async () => {
@@ -85,10 +101,25 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>IoT Query Probe v2</h1>
-        <button type="button" className="btn-logout" onClick={logout}>
-          Sign out
-        </button>
+        <div className="app-header-content">
+          <div>
+            <h1>IoT Query Probe v2</h1>
+            <p className="app-header-description">
+              Analytics tool for Navixy IoT Query - explore telematics data and create simple reports
+            </p>
+          </div>
+          <button type="button" className="btn-logout" onClick={logout}>
+            Sign out
+          </button>
+        </div>
+        <div className="app-status-bar">
+          <span className={`status-indicator status-${status}`}>
+            {status === 'connecting' && '🔄 Connecting...'}
+            {status === 'ready' && '✅ Ready'}
+            {status === 'error' && '❌ Connection Error'}
+            {status === 'not-authenticated' && '⚠️ Not Authenticated'}
+          </span>
+        </div>
       </header>
 
       <div className="app-body">

@@ -5,14 +5,26 @@ function getToken() {
 }
 
 let csrfToken = null;
+let csrfTokenPromise = null;
 
 export async function getCsrfToken() {
   if (csrfToken) return csrfToken;
-  const r = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
-  if (!r.ok) throw new Error('Failed to get CSRF token');
-  const data = await r.json();
-  csrfToken = data.csrfToken;
-  return csrfToken;
+  if (csrfTokenPromise) return csrfTokenPromise;
+  csrfTokenPromise = (async () => {
+    const r = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
+    if (!r.ok) throw new Error('Failed to get CSRF token');
+    const data = await r.json();
+    csrfToken = data.csrfToken;
+    csrfTokenPromise = null;
+    return csrfToken;
+  })();
+  return csrfTokenPromise;
+}
+
+export async function refreshCsrfToken() {
+  csrfToken = null;
+  csrfTokenPromise = null;
+  return getCsrfToken();
 }
 
 export async function api(path, options = {}) {
@@ -25,8 +37,9 @@ export async function api(path, options = {}) {
   if (options.method && options.method !== 'GET' && options.method !== 'HEAD') {
     try {
       headers['X-CSRF-Token'] = await getCsrfToken();
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.warn('CSRF token fetch failed:', err);
+      throw new Error('Failed to get CSRF token. Please refresh the page.');
     }
   }
   const res = await fetch(`${API_BASE}${path}`, { ...options, credentials: 'include', headers });
@@ -37,7 +50,14 @@ export async function api(path, options = {}) {
   } else {
     data = await res.text();
   }
-  if (!res.ok) throw new Error(data?.error || data || `HTTP ${res.status}`);
+  if (!res.ok) {
+    if (res.status === 403 && data?.error?.includes('CSRF')) {
+      csrfToken = null;
+      csrfTokenPromise = null;
+      throw new Error('CSRF token expired. Please try again.');
+    }
+    throw new Error(data?.error || data || `HTTP ${res.status}`);
+  }
   return data;
 }
 

@@ -20,9 +20,6 @@ export function SQLEditor({ value, onChange, onRun, loading, history = [] }) {
   return (
     <div className="sql-editor">
       <div className="sql-editor-toolbar">
-        <button type="button" className="btn-run" onClick={onRun} disabled={loading}>
-          {loading ? 'Running…' : 'Run (Ctrl+Enter)'}
-        </button>
         {history.length > 0 && (
           <select
             className="history-select"
@@ -50,6 +47,11 @@ export function SQLEditor({ value, onChange, onRun, loading, history = [] }) {
         spellCheck={false}
         rows={8}
       />
+      <div className="sql-editor-footer">
+        <button type="button" className="btn-run" onClick={onRun} disabled={loading}>
+          {loading ? 'Running…' : 'Run (Ctrl+Enter)'}
+        </button>
+      </div>
     </div>
   );
 }
