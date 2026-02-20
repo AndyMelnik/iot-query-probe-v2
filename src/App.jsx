@@ -5,6 +5,7 @@ import { ResultsTable } from './components/ResultsTable';
 import { ChartBuilder } from './components/ChartBuilder';
 import { MapView } from './components/MapView';
 import { ExportBar } from './components/ExportBar';
+import { DebugPanel } from './components/DebugPanel';
 import './App.css';
 
 const defaultSql = 'SELECT * FROM raw_business_data.objects\nLIMIT 1000';
@@ -28,14 +29,25 @@ export default function App() {
   const mapContainerRef = useRef(null);
 
   useEffect(() => {
+    // Enable debug logging if ?debug=true in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('debug') === 'true') {
+      window.__DEBUG_ENABLED = true;
+      console.log('🐛 Debug mode enabled');
+    }
+
     const init = async () => {
+      console.log('App initialization started');
       const authenticated = isAuthenticated();
+      console.log('Auth check:', authenticated ? 'Authenticated' : 'Not authenticated');
       setAuth(authenticated);
       if (authenticated) {
         setStatus('connecting');
         try {
           // Initialize CSRF cookie (double-submit pattern - no server storage needed)
+          console.log('Fetching CSRF token...');
           await getCsrfToken();
+          console.log('CSRF token initialized');
           setStatus('ready');
         } catch (err) {
           // CSRF token fetch failed, but continue anyway (cookie might be set)
@@ -51,17 +63,26 @@ export default function App() {
 
   const runQuery = useCallback(async () => {
     if (!sql.trim()) return;
+    console.log('Executing query:', sql.substring(0, 100));
     setLoading(true);
     setError(null);
     setResult(null);
     try {
+      const startTime = Date.now();
       const data = await executeQuery(sql);
+      const duration = Date.now() - startTime;
+      console.log('Query executed successfully:', { 
+        rowCount: data.rowCount, 
+        duration: `${duration}ms`,
+        truncated: data.truncated 
+      });
       setResult(data);
       setHistory(h => [{ sql: sql.trim(), at: Date.now() }, ...h.slice(0, 49)]);
       try {
         localStorage.setItem('iqp_sql', sql);
       } catch {}
     } catch (err) {
+      console.error('Query execution failed:', err);
       setError(err.message || 'Query failed');
     } finally {
       setLoading(false);
@@ -175,6 +196,7 @@ export default function App() {
           </>
         )}
       </div>
+      <DebugPanel />
     </div>
   );
 }
