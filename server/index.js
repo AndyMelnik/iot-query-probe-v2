@@ -6,6 +6,15 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import https from 'https';
+
+// Global TLS configuration: accept self-signed certificates by default
+// This helps with Navixy databases that use self-signed certificates
+// Can be overridden with NODE_TLS_REJECT_UNAUTHORIZED=1 environment variable
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '1') {
+  https.globalAgent.options.rejectUnauthorized = false;
+  console.log('[TLS] Global TLS: accepting self-signed certificates (NODE_TLS_REJECT_UNAUTHORIZED not set to 1)');
+}
 
 import { authRouter } from './routes/auth.js';
 import { queryRouter } from './routes/query.js';

@@ -56,6 +56,8 @@ npm run dev:client   # Vite only (port 5173)
 | `REPORT_MAX_ROWS` | No | Max rows in HTML report (default 500). |
 | `CSP_FRAME_ANCESTORS` | No | `frame-ancestors` for iframe (default Navixy). |
 | `CORS_ORIGINS` | No | Allowed origins, comma-separated. |
+| `DB_REJECT_UNAUTHORIZED` | No | Set to `true` to reject self-signed certificates (default: `false`, accepts self-signed). |
+| `NODE_TLS_REJECT_UNAUTHORIZED` | No | Set to `1` to reject all self-signed certificates globally (default: accepts self-signed). |
 | `PORT` | No | Server port (default 3000). |
 
 **No secrets in repo.** Use Render (or your host) environment variables.
@@ -83,6 +85,7 @@ Configure the app in Navixy **User applications**: set the app URL to your deplo
 - **CSP**: `frame-ancestors` restricted to Navixy (configurable).
 - **CSRF**: Token required for state-changing requests (export/report).
 - **Credentials**: Postgres URLs never sent to the client.
+- **SSL/TLS**: By default, accepts self-signed certificates for database connections (common with Navixy databases). Connections are still encrypted; only certificate authority verification is skipped. Configure via `DB_REJECT_UNAUTHORIZED` or `NODE_TLS_REJECT_UNAUTHORIZED` environment variables.
 
 ## License
 
