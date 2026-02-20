@@ -34,21 +34,13 @@ export default function App() {
       if (authenticated) {
         setStatus('connecting');
         try {
-          // Ensure CSRF token is fetched before marking as ready
-          await getCsrfToken(true); // Force refresh to ensure we have a fresh token
+          // Initialize CSRF cookie (double-submit pattern - no server storage needed)
+          await getCsrfToken();
           setStatus('ready');
         } catch (err) {
-          setStatus('error');
-          console.error('Failed to initialize CSRF token:', err);
-          // Try again after a short delay
-          setTimeout(async () => {
-            try {
-              await getCsrfToken(true);
-              setStatus('ready');
-            } catch (retryErr) {
-              console.error('CSRF token retry failed:', retryErr);
-            }
-          }, 1000);
+          // CSRF token fetch failed, but continue anyway (cookie might be set)
+          console.warn('CSRF token init warning:', err);
+          setStatus('ready');
         }
       } else {
         setStatus('not-authenticated');
