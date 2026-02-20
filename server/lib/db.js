@@ -39,22 +39,29 @@ function createPool(connectionString) {
     };
 
     // Set SSL configuration
-    // pg library: ssl: false disables SSL, ssl: { rejectUnauthorized: false } enables SSL but accepts self-signed
+    // pg v8.0+ requires explicit rejectUnauthorized: false to accept self-signed certs
+    // ssl: false disables SSL entirely, ssl: { rejectUnauthorized: false } enables SSL but accepts self-signed
     if (sslDisabled) {
       poolConfig.ssl = false;
       console.log(`[DB] Pool created for ${key}: SSL disabled via connection string`);
     } else {
       // Use SSL but accept self-signed certificates
       // This is safe: connection is still encrypted, just CA verification is skipped
-      // Additional options to handle various certificate issues
+      // IMPORTANT: In pg v8.0+, we MUST explicitly set rejectUnauthorized: false
       poolConfig.ssl = {
         rejectUnauthorized: rejectUnauthorized, // false = accept self-signed (default)
-        // Don't verify hostname either (some certs have mismatched hostnames)
-        checkServerIdentity: () => undefined,
-        // Additional options for compatibility
-        require: false, // Don't require SSL if server doesn't support it
       };
-      console.log(`[DB] Pool created for ${key}: SSL enabled, rejectUnauthorized=${rejectUnauthorized}`);
+      
+      // Skip hostname verification for self-signed certs
+      // This prevents "hostname mismatch" errors
+      if (!rejectUnauthorized) {
+        poolConfig.ssl.checkServerIdentity = function() {
+          // Return undefined to skip hostname verification
+          return undefined;
+        };
+      }
+      
+      console.log(`[DB] Pool created for ${key}: SSL enabled, rejectUnauthorized=${rejectUnauthorized}, checkServerIdentity=${!rejectUnauthorized ? 'disabled' : 'enabled'}`);
     }
 
     const pool = new Pool(poolConfig);
