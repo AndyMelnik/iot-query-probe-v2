@@ -9,6 +9,17 @@ export const config = {
   redisUrl: process.env.REDIS_URL,
 };
 
-if (!config.jwtSecret || config.jwtSecret.length < 32) {
-  console.warn('JWT_SECRET should be at least 32 characters. Set JWT_SECRET in environment.');
+// Validate JWT_SECRET at startup
+if (!config.jwtSecret) {
+  console.error('❌ ERROR: JWT_SECRET environment variable is not set!');
+  console.error('   Set JWT_SECRET in Render Dashboard → Environment → Add Environment Variable');
+  console.error('   Value must be at least 32 characters long.');
+  process.exit(1);
+}
+
+if (config.jwtSecret.length < 32) {
+  console.error('❌ ERROR: JWT_SECRET must be at least 32 characters long!');
+  console.error(`   Current length: ${config.jwtSecret.length} characters`);
+  console.error('   Generate a secure random string: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  process.exit(1);
 }

@@ -26,6 +26,14 @@ export const authRouter = async (req, res) => {
   });
   setCredentials(userId, { iotDbUrl, userDbUrl });
 
+  if (!config.jwtSecret) {
+    auditLog('auth_error', { error: 'JWT_SECRET not configured' });
+    return res.status(500).json({
+      success: false,
+      error: 'Server configuration error: JWT_SECRET not set',
+    });
+  }
+
   const token = jwt.sign(
     { userId, email: email.trim(), role: userRole },
     config.jwtSecret,
