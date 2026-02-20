@@ -6,8 +6,12 @@ const CSRF_HEADER = 'x-csrf-token';
 const tokens = new Map();
 
 export function csrfTokenRoute(req, res) {
+  const sessionId = req.cookies?.iqp_sid || req.sessionId;
+  if (!sessionId) {
+    return res.status(400).json({ success: false, error: 'No session found' });
+  }
   const token = crypto.randomBytes(24).toString('hex');
-  tokens.set(req.sessionId, token);
+  tokens.set(sessionId, token);
   res.cookie(CSRF_COOKIE, token, {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
