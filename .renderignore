@@ -1,0 +1,16 @@
+# Files/folders to exclude from Render deployment
+# (Render uses .gitignore by default, but you can add additional exclusions here)
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local environment
+.env.local
+.env.*.local
+
+# Documentation (optional - can be included)
+# docs/
+# *.md

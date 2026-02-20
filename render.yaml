@@ -1,0 +1,14 @@
+# Render.com Blueprint (optional). Prefer Dashboard: New Web Service, connect repo.
+# Note: PORT is automatically set by Render - don't override unless needed
+services:
+  - type: web
+    name: iotquery-probe-v2
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+        # Note: After deployment, manually set JWT_SECRET to a secure 32+ character string

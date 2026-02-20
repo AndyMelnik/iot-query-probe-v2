@@ -1,0 +1,62 @@
+.sql-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sql-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-run {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.btn-run:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-run:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.history-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  max-width: 320px;
+}
+
+.sql-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.sql-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.sql-textarea::placeholder {
+  color: var(--muted);
+}
