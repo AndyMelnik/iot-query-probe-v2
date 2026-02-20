@@ -8,20 +8,20 @@
     "dev:server": "node server/index.js",
     "dev:client": "vite",
     "build": "vite build",
-    "start": "NODE_ENV=production node server/index.js",
+    "start": "NODE_ENV=production node --no-deprecation server/index.js",
     "preview": "vite preview"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "exceljs": "^4.4.0",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.0",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "write-excel-file": "^2.3.10"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.3",

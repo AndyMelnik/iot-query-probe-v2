@@ -1,5 +1,6 @@
 # Render.com Blueprint (optional). Prefer Dashboard: New Web Service, connect repo.
-# Note: PORT is automatically set by Render - don't override unless needed
+# REQUIRED: In Render Dashboard → Environment, add JWT_SECRET (32+ chars) or app will not start.
+# Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 services:
   - type: web
     name: iotquery-probe-v2
@@ -11,4 +12,3 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-        # Note: After deployment, manually set JWT_SECRET to a secure 32+ character string

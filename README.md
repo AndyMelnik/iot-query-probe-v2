@@ -2,6 +2,19 @@
 
 Lightweight, browser-based tool for exploring and exporting IoT telematics data. Designed to be embedded in **Navixy** via iframe and authenticated via **Navixy App Connect**.
 
+---
+
+## ⚠️ Before first deploy (Render.com)
+
+**You must set `JWT_SECRET`** or the app will not start.
+
+1. Render Dashboard → your service → **Environment** tab  
+2. **Add Environment Variable**: Key `JWT_SECRET`, Value = a random string **at least 32 characters**  
+3. Generate one: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`  
+4. Save → Render will redeploy. See [RENDER_SETUP.md](RENDER_SETUP.md) if you see `secretOrPrivateKey must have a value`.
+
+---
+
 ## Features
 
 - **Auth**: Navixy App Connect (middleware POSTs to `/api/auth/login` with `email`, `iotDbUrl`, `userDbUrl`, `role`; app returns JWT; credentials never sent to browser).
